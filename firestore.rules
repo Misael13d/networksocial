@@ -1,32 +1,12 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Función para verificar si el usuario está logueado
-    function sLogueado() {
-      return request.auth != null;
-    }
-
     match /usuarios/{userId} {
-      allow read: if true; 
-      // Solo el dueño puede crear o editar su propio perfil
-      allow write: if sLogueado() && request.auth.uid == userId;
+      allow read, write: if true;  // ⚠️ Solo para pruebas, cualquiera puede leer/escribir en usuarios
     }
-
-    match /publicaciones/{pubId} {
-      allow read: if true;
-      // Para crear, debe estar logueado y ser el autor
-      allow create: if sLogueado() && request.resource.data.autorid == request.auth.uid;
-      // Para editar, debe ser el mismo autor
-      allow update, delete: if sLogueado() && resource.data.autorid == request.auth.uid;
+    // Bloquea el resto de colecciones
+    match /{document=**} {
+      allow read, write: if false;
     }
-
-    match /amigos/{amistadId} {
-      allow read: if sLogueado() && (resource.data.remitenteid == request.auth.uid || resource.data.destinatarioid == request.auth.uid);
-      allow create: if sLogueado() && request.resource.data.remitenteid == request.auth.uid;
-      allow update: if sLogueado() && request.resource.data.destinatarioid == request.auth.uid;
-    }
-    
-    // Reglas similares para comentarios y likes usando sLogueado()...
   }
 }

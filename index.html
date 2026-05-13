@@ -1,11 +1,66 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8">
+  <title>Test Conexión Firestore</title>
 </head>
 <body>
-    <h1>hola mundo mundial</h1>
+  <button id="btn">Insertar usuario de prueba</button>
+  <p id="mensaje"></p>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBgsARKU-F0ODTBpbbzX7UbsvoOFABArcI",
+      authDomain: "networksocial.firebaseapp.com",
+      projectId: "networksocial",
+      storageBucket: "networksocial.firebasestorage.app",
+      messagingSenderId: "28377362445",
+      appId: "1:28377362445:web:4a037748d4422c8d10e544"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Fuerza la red para evitar el bloqueo offline
+    (async () => {
+      try {
+        await db.disableNetwork();
+        await db.enableNetwork();
+        console.log("Red de Firestore forzada a modo online.");
+      } catch (e) {
+        console.warn("No se pudo reiniciar la red de Firestore:", e);
+      }
+    })();
+
+    document.getElementById('btn').addEventListener('click', async () => {
+      const uid = "testuser123";
+      const mensaje = document.getElementById('mensaje');
+      mensaje.textContent = "Intentando insertar...";
+
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("La operación excedió el tiempo de espera (10s)")), 10000)
+      );
+
+      try {
+        await Promise.race([
+          setDoc(doc(db, "usuarios", uid), {
+            uid: uid,
+            nombre: "Usuario de prueba",
+            email: "test@example.com",
+            biografia: "Bio de prueba",
+            fechaRegistro: new Date().toISOString()
+          }),
+          timeoutPromise
+        ]);
+        mensaje.textContent = `✅ Documento '${uid}' insertado. Revisa Firestore.`;
+      } catch (error) {
+        mensaje.textContent = "❌ Error: " + error.message;
+        console.error("Error capturado:", error);
+      }
+    });
+  </script>
 </body>
 </html>
